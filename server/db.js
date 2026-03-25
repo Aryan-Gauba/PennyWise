@@ -1,24 +1,20 @@
-// server/db.js
 import pg from 'pg';
 import dotenv from 'dotenv';
 
-// Load environment variables from .env
 dotenv.config();
 
 const { Pool } = pg;
 
+// Use DATABASE_URL if available (Production), otherwise fallback to local pieces
+const isProduction = process.env.NODE_ENV === 'production';
+
 const pool = new Pool({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
+  connectionString: process.env.DATABASE_URL,
+  ssl: isProduction ? { rejectUnauthorized: false } : false
 });
 
-
-// Optional: Test the connection on startup
 pool.on('connect', () => {
-  console.log('Connected to the PostgreSQL database');
+  console.log(`Connected to the PostgreSQL database (${isProduction ? 'Production' : 'Local'})`);
 });
 
 export default pool;

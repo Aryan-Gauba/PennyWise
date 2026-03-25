@@ -12,11 +12,22 @@ import bcrypt from 'bcrypt';
 dotenv.config();
 
 const app = express();
-const PORT = 5000;
+app.set('trust proxy', 1);
 
 // --- MIDDLEWARE ---
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL // Add your Vercel frontend URL to .env
+];
+
 app.use(cors({
-  origin: "http://localhost:5173", // Replace with your frontend URL
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -27,7 +38,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production', // Set to true for HTTPS on Vercel
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
     maxAge: 24 * 60 * 60 * 1000 
   }
 }));
@@ -128,7 +140,7 @@ app.get("/auth/google", passport.authenticate('google', { scope: ['profile', 'em
 
 app.get("/auth/google/callback", 
   passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => res.redirect('http://localhost:5173/') 
+  (req, res) => res.redirect(process.env.FRONTEND_URL || 'http://localhost:5173/') 
 );
 
 app.post("/api/logout", (req, res) => {
@@ -218,6 +230,15 @@ app.delete("/api/expenses/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+
+// 4. PORT & SERVERLESS EXPORT
+const PORT = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-});
+  });
+}
+
+// CRITICAL FOR VERCEL:
+export default app;
