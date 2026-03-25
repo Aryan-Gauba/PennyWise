@@ -10,6 +10,8 @@ import Footer from './components/Footer';
 import About from './components/About';
 import Login from './components/Login';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 // Configure axios globally to handle session cookies
 axios.defaults.withCredentials = true;
 
@@ -21,7 +23,7 @@ function TrackerPage() {
   const fetchByDate = async (date) => {
     try {
       // Endpoint is now protected on backend
-      const res = await axios.get(`http://localhost:5000/api/expenses?date=${date}`);
+      const res = await axios.get(`${API_BASE_URL}/api/expenses?date=${date}`);
       setExpenses(res.data);
     } catch (err) {
       console.error("Fetch error:", err.message);
@@ -69,7 +71,7 @@ function App() {
     const checkAuth = async () => {
       try {
         // You might want to create an /api/user endpoint to return req.user
-        const res = await axios.get('http://localhost:5000/api/expenses');
+        const res = await axios.get(`${API_BASE_URL}/api/expenses`);
         if (res.status === 200) setIsAuthenticated(true);
       } catch (err) {
         setIsAuthenticated(false);

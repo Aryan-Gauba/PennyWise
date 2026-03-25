@@ -6,6 +6,8 @@ import {
 } from 'recharts';
 import '../App.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Analysis = () => {
   const [expenses, setExpenses] = useState([]);
   const [filter, setFilter] = useState('monthly'); // 'weekly', 'monthly', 'yearly'
@@ -14,7 +16,7 @@ const Analysis = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/expenses").then(res => setExpenses(res.data));
+    axios.get(`${API_BASE_URL}/api/expenses`).then(res => setExpenses(res.data));
   }, []);
 
   // --- DATA PROCESSING LOGIC ---
@@ -61,7 +63,7 @@ const Analysis = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/ai-advice", { 
+      const res = await axios.post(`${API_BASE_URL}/api/ai-advice`, { 
         expenses,
         prompt: userPrompt // Sending your custom question to the backend
       });

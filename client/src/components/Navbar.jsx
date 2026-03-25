@@ -1,13 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Navbar = ({ isAuth, setIsAuth }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       // Calling the logout route you added to index.js
-      await axios.post('http://localhost:5000/api/logout');
+      await axios.post(`${API_BASE_URL}/api/logout`);
       
       // Update global state in App.jsx
       setIsAuth(false);

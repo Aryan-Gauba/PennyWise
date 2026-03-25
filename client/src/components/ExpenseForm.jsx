@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 // Destructure selectedDate from props here
 const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
   const [description, setDescription] = useState("");
@@ -18,7 +20,7 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
       };
       
       // Post to the backend
-      await axios.post("http://localhost:5000/api/expenses", body);
+      await axios.post(`${API_BASE_URL}/api/expenses`, body);
       
       onExpenseAdded(); 
       setDescription("");

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { FaGoogle, FaLock, FaUser } from 'react-icons/fa';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Login = ({ setAuth }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -17,7 +19,7 @@ const Login = ({ setAuth }) => {
     const endpoint = isRegister ? '/api/register' : '/api/login';
     
     try {
-      const res = await axios.post(`http://localhost:5000${endpoint}`, formData, {
+      const res = await axios.post(`${API_BASE_URL}${endpoint}`, formData, {
         withCredentials: true // Crucial for sending/receiving session cookies
       });
       
@@ -33,7 +35,7 @@ const Login = ({ setAuth }) => {
   };
 
   const googleLogin = () => {
-    window.open("http://localhost:5000/auth/google", "_self");
+    window.open(`${API_BASE_URL}/auth/google`, "_self");
   };
 
   return (
