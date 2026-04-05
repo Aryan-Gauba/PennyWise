@@ -37,6 +37,7 @@ AI: Groq Cloud SDK (Llama 3.3 70B)
 
 ## 📂 Project Structure
 Plaintext
+```
 PennyWise/
 ├── PennyWise-Client/       # React Frontend (Vite)
 │   ├── src/
@@ -47,6 +48,7 @@ PennyWise/
     ├── db.js               # PostgreSQL connection
     ├── index.js            # Express server and API routes
     └── .env                # Environment variables (Internal)
+```
 ## ⚙️ Installation & Setup
 1. Clone the Repository
 Bash
