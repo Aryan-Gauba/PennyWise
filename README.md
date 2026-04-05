@@ -52,37 +52,49 @@ PennyWise/
 ## ⚙️ Installation & Setup
 1. Clone the Repository
 Bash
+```
 git clone https://github.com/your-username/PennyWise.git
 cd PennyWise
-2. Backend Setup
+```
+3. Backend Setup
 Bash
+```
 cd PennyWise-API
 npm install
+```
 Create a .env file in the PennyWise-API folder:
 
 Code snippet
+```
 PORT=5000
 DATABASE_URL=your_postgres_url
 SESSION_SECRET=your_secret
 GROQ_API_KEY=your_groq_key
 GOOGLE_CLIENT_ID=your_id
 GOOGLE_CLIENT_SECRET=your_secret
+```
 Run the server:
 
 Bash
+```
 node index.js
+```
 3. Frontend Setup
 Bash
+```
 cd ../PennyWise-Client
 npm install
 npm run dev
+```
 ## 🛡️ API Endpoints
+```
 Method	Endpoint	Description	Auth Required
 POST	/api/register	Register a new user	No
 POST	/api/login	Login with credentials	No
 GET	/api/expenses	Fetch user expenses (filtered by date)	Yes
 POST	/api/expenses	Add a new expense	Yes
 POST	/api/ai-advice	Get AI financial insights	Yes
+```
 ## 📝 Author
 Aryan Gauba ECE Undergraduate | Full Stack Developer 
 
