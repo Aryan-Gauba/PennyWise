@@ -174,7 +174,7 @@ app.post("/api/ai-advice", isAuthenticated, async (req, res) => {
         },
         { role: "user", content: `User Question: ${prompt}\n\nData: ${JSON.stringify(expenses)}` },
       ],
-      model: "qwen/qwen3.6-27b", 
+      model: "llama-3.1-8b-instant", 
     });
     const rawText = chatCompletion.choices[0].message.content;
 
