@@ -176,7 +176,13 @@ app.post("/api/ai-advice", isAuthenticated, async (req, res) => {
       ],
       model: "qwen/qwen3.6-27b", 
     });
-    res.json({ advice: chatCompletion.choices[0].message.content });
+    const rawText = chatCompletion.choices[0].message.content;
+
+// 👇 Clean the string on the backend
+    const cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+
+    res.json({ advice: cleanText });
+    // res.json({ advice: chatCompletion.choices[0].message.content });
   } catch (err) {
     res.status(500).json({ advice: "Offline." });
   }
