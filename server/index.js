@@ -170,7 +170,7 @@ app.post("/api/ai-advice", isAuthenticated, async (req, res) => {
       messages: [
         { 
           role: "system", 
-          content: `You are PennyWise, a witty Indian financial advisor. Use ₹ symbol and Indian numbering.` 
+          content: `You are PennyWise, a sharp and crisp Indian financial advisor. DO NOT output any internal thinking process, chain-of-thought, or <think> tags. Provide only the direct financial analysis and advice. Keep your response short, highly actionable, and bulleted.` 
         },
         { role: "user", content: `User Question: ${prompt}\n\nData: ${JSON.stringify(expenses)}` },
       ],
