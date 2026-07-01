@@ -174,7 +174,7 @@ app.post("/api/ai-advice", isAuthenticated, async (req, res) => {
         },
         { role: "user", content: `User Question: ${prompt}\n\nData: ${JSON.stringify(expenses)}` },
       ],
-      model: "llama-3.3-70b-versatile", 
+      model: "qwen-2.5-72b", 
     });
     res.json({ advice: chatCompletion.choices[0].message.content });
   } catch (err) {
