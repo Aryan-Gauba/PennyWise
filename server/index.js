@@ -178,8 +178,9 @@ app.post("/api/ai-advice", isAuthenticated, async (req, res) => {
     });
     const rawText = chatCompletion.choices[0].message.content;
 
-// 👇 Clean the string on the backend
-    const cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+    // 👇 Clean the string on the backend
+    // const cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+    const cleanText = rawText.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim();
 
     res.json({ advice: cleanText });
     // res.json({ advice: chatCompletion.choices[0].message.content });
