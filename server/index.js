@@ -166,13 +166,26 @@ const groq = new OpenAI({
 app.post("/api/ai-advice", isAuthenticated, async (req, res) => {
   try {
     const { expenses, prompt } = req.body; 
+
+    // 💰 1. Pull user's income parameters securely from the database
+    const userRes = await pool.query("SELECT monthly_income, annual_income FROM users WHERE id = $1", [req.user.id]);
+    const { monthly_income, annual_income } = userRes.rows[0] || { monthly_income: 0, annual_income: 0 };
+
+    // 📦 2. Bundle everything into a single financial payload
+    const financialData = {
+      monthlyIncome: monthly_income,
+      annualIncome: annual_income,
+      totalExpensesTracked: expenses.length,
+      expensesList: expenses
+    };
+
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         { 
           role: "system", 
-          content: `You are PennyWise, a sharp and crisp Indian financial advisor. DO NOT output any internal thinking process, chain-of-thought, or <think> tags. Provide only the direct financial analysis and advice. Keep your response short, highly actionable, and bulleted.` 
+          content: `You are PennyWise, a sharp and crisp Indian financial advisor. You will receive a JSON packet containing the user's tracked expenses AND their monthly/annual income. Analyze their actual savings rate, critique discretionary habits against their real income using a strict 50/30/20 target breakdown, and provide highly actionable, short bulleted financial advice in Rupees (₹). DO NOT output any internal thinking process, chain-of-thought, metadata checklists, or <think> tags.` 
         },
-        { role: "user", content: `User Question: ${prompt}\n\nData: ${JSON.stringify(expenses)}` },
+        { role: "user", content: `User Question: ${prompt}\n\nFinancial Packet Data: ${JSON.stringify(financialData)}` },
       ],
       model: "llama-3.1-8b-instant", 
     });
@@ -237,6 +250,37 @@ app.delete("/api/expenses/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// --- USER INCOME MANAGEMENT ROUTES ---
+
+// Get current user profile (including tracked income)
+app.get("/api/user/profile", isAuthenticated, async (req, res) => {
+  try {
+    const user = await pool.query("SELECT monthly_income, annual_income FROM users WHERE id = $1", [req.user.id]);
+    res.json(user.rows[0] || { monthly_income: 0, annual_income: 0 });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch profile dataset." });
+  }
+});
+
+// Update income values
+app.post("/api/user/update-income", isAuthenticated, async (req, res) => {
+  try {
+    const { monthlyIncome, annualIncome } = req.body;
+    
+    const monthly = parseFloat(monthlyIncome) || 0;
+    // Fallback: If they only fill out monthly, auto-calculate their annual income (monthly * 12)
+    const annual = parseFloat(annualIncome) || (monthly * 12);
+
+    await pool.query(
+      "UPDATE users SET monthly_income = $1, annual_income = $2 WHERE id = $3",
+      [monthly, annual, req.user.id]
+    );
+
+    res.json({ message: "Income updated successfully!", monthly_income: monthly, annual_income: annual });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update income." });
+  }
+});
 
 // 4. PORT & SERVERLESS EXPORT
 const PORT = process.env.PORT || 5000;
