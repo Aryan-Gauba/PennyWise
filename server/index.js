@@ -33,13 +33,15 @@ app.use(cors({
 app.use(express.json());
 
 // 1. Session Configuration
+// 1. Session Configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'pennywise_secret_key',
   resave: false,
   saveUninitialized: false,
+  proxy: true, // 👈 Tells express-session to trust Vercel's reverse proxy headers
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', // Set to true for HTTPS on Vercel
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
+    secure: true, // 👈 Must be true for HTTPS (Cross-domain cookies won't save without this)
+    sameSite: 'none', // 👈 Must be 'none' so Vercel can pass the cookie to your client domain
     maxAge: 24 * 60 * 60 * 1000 
   }
 }));
@@ -143,12 +145,12 @@ app.get("/auth/google/callback",
   (req, res) => res.redirect(process.env.FRONTEND_URL || 'http://localhost:5173/') 
 );
 
-app.post("/api/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) return res.status(500).json({ error: "Logout failed" });
-    res.json({ message: "Logged out" });
-  });
-});
+// app.post("/api/logout", (req, res) => {
+//   req.logout((err) => {
+//     if (err) return res.status(500).json({ error: "Logout failed" });
+//     res.json({ message: "Logged out" });
+//   });
+// });
 
 // Middleware to check if user is logged in
 const isAuthenticated = (req, res, next) => {
