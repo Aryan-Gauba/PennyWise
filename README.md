@@ -1,54 +1,48 @@
 # 🪙 PennyWise
-PennyWise is a full-stack expense tracking application designed to help users manage their finances with ease. It features a modern React frontend, a robust Node.js/Express backend, and integrates AI-driven financial insights to provide personalized spending advice.
+PennyWise is a modern, full-stack expense tracking application designed to help users manage their finances with precision. It features a sleek FinTech dark-mode UI, a modular Node.js/Express backend, persistent PostgreSQL storage, and real-time AI-driven financial insights.
 
 ## 🚀 Key Features
-Full-Stack Architecture: Decoupled Client (Vite + React) and Server (Node + Express).
-
-Secure Authentication: Supports Local (Username/Password) and Google OAuth 2.0 login via Passport.js.
-
-Expense Management: Create, view (filtered by date), and delete expenses seamlessly.
-
-Financial Analytics: Interactive data visualization using Recharts (Line, Bar, and Pie charts).
-
-AI Insights: Get witty, Indian-context financial advice powered by Llama 3 via Groq API.
-
-Relational Database: Persistent data storage using PostgreSQL.
+* **Modern FinTech UI/UX:** Built with a custom Slate & Emerald dark-mode palette, glassmorphism elements, and fully responsive layouts for mobile, tablet, and desktop.
+* **Financial Profile & Budgeting:** Track monthly and annual income alongside a dynamic **Monthly Budget Progress Bar** with real-time color-coded alerts (Safe, Warning, Danger).
+* **Secure Authentication:** Supports Local (Username/Password with bcrypt hashing) and Google OAuth 2.0 login via Passport.js and express-session.
+* **Expense Management:** Seamlessly add, filter by date, view, and delete daily expenses.
+* **Advanced Financial Analytics:** Interactive data visualization using Recharts (Line charts for spending trends, plus Bar and Pie charts with time-frame filters for weekly, monthly, and yearly ranges).
+* **AI Financial Coach:** Get sharp, context-aware financial advice powered by Llama 3 via the Groq API, evaluating habits against a strict 50/30/20 budget breakdown.
+* **Relational Database:** Persistent data storage using PostgreSQL (Neon) with connection pooling and session caching.
 
 ## 🛠️ Tech Stack
 ### Frontend
-Framework: React (Vite)
-
-Styling: Bootstrap 5, Lucide-React
-
-Charts: Recharts
-
-HTTP Client: Axios (with custom interceptors for session handling)
+* **Framework:** React (Vite)
+* **Styling:** Custom CSS Variables, Glassmorphism, Lucide-React / React Icons
+* **Charts:** Recharts
+* **Routing & State:** React Router DOM, React Context API
+* **HTTP Client:** Axios (Centralized API service layer with credentials support)
 
 ### Backend
-Runtime: Node.js
-
-Framework: Express.js
-
-Database: PostgreSQL (pg pool)
-
-Auth: Passport.js (Local & Google Strategies), Express-Session
-
-AI: Groq Cloud SDK (Llama 3.3 70B)
+* **Runtime:** Node.js
+* **Framework:** Express.js (Modular Route/Controller architecture)
+* **Database:** PostgreSQL (Neon DB via `pg` pool)
+* **Auth:** Passport.js (Local & Google OAuth 2.0 Strategies), Express-Session, Connect-Pg-Simple
+* **AI Integration:** Groq Cloud SDK (Llama-3.1-8b-instant)
 
 ## 📂 Project Structure
-Plaintext
-```
+```text
 PennyWise/
-├── PennyWise-Client/       # React Frontend (Vite)
+├── client/                     # React Frontend (Vite)
 │   ├── src/
-│   │   ├── components/     # UI Components (Analysis, ExpenseForm, etc.)
-│   │   ├── Api.js          # Central Axios configuration
-│   │   └── App.jsx         # Main routing and Auth logic
-└── PennyWise-API/          # Node.js Backend
-    ├── db.js               # PostgreSQL connection
-    ├── index.js            # Express server and API routes
-    └── .env                # Environment variables (Internal)
+│   │   ├── components/         # UI Components (Analysis, ExpenseForm, Login, etc.)
+│   │   ├── context/            # Global State Management (AuthContext)
+│   │   ├── services/           # Centralized Axios API service layer
+│   │   ├── App.jsx             # Main routing and layout wrapper
+│   │   └── App.css             # Custom Design System & FinTech Theme
+└── server/                     # Node.js / Express Backend
+    ├── config/                 # Passport strategies & configuration
+    ├── middleware/             # Route protection middleware
+    ├── routes/                 # Modular API routers (auth, expenses, user, AI)
+    ├── db.js                   # PostgreSQL connection pool
+    └── index.js                # Server entry point
 ```
+
 ## ⚙️ Installation & Setup
 1. Clone the Repository
 Bash
@@ -67,11 +61,12 @@ Create a .env file in the PennyWise-API folder:
 Code snippet
 ```
 PORT=5000
-DATABASE_URL=your_postgres_url
-SESSION_SECRET=your_secret
-GROQ_API_KEY=your_groq_key
-GOOGLE_CLIENT_ID=your_id
-GOOGLE_CLIENT_SECRET=your_secret
+DATABASE_URL=your_postgres_neon_url
+SESSION_SECRET=your_session_secret
+GROQ_API_KEY=your_groq_api_key
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+FRONTEND_URL=http://localhost:5173
 ```
 Run the server:
 
@@ -86,15 +81,7 @@ cd ../PennyWise-Client
 npm install
 npm run dev
 ```
-## 🛡️ API Endpoints
-```
-Method	Endpoint	Description	Auth Required
-POST	/api/register	Register a new user	No
-POST	/api/login	Login with credentials	No
-GET	/api/expenses	Fetch user expenses (filtered by date)	Yes
-POST	/api/expenses	Add a new expense	Yes
-POST	/api/ai-advice	Get AI financial insights	Yes
-```
+
 ## 📝 Author
 Aryan Gauba ECE Undergraduate | Full Stack Developer 
 
