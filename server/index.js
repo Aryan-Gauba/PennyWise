@@ -1,14 +1,18 @@
 import express from 'express';
 import cors from 'cors';
-import pool from './db.js';
-import OpenAI from "openai";
 import dotenv from 'dotenv';
 import passport from 'passport';
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
-import { Strategy as LocalStrategy } from 'passport-local';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import bcrypt from 'bcrypt';
+
+import pool from './db.js';
+import { configurePassport } from './config/passport.js';
+
+// Import Route Handlers
+import authRoutes from './routes/authRoutes.js';
+import expenseRoutes from './routes/expenseRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
 
@@ -18,7 +22,7 @@ app.set('trust proxy', 1);
 // --- MIDDLEWARE ---
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL // Add your Vercel frontend URL to .env
+  process.env.FRONTEND_URL 
 ];
 
 app.use(cors({
@@ -35,11 +39,11 @@ app.use(express.json());
 
 const PgSessionStore = pgSession(session);
 
-// 1. Session Configuration
+// --- SESSION CONFIGURATION ---
 app.use(session({
   store: new PgSessionStore({
-    pool: pool,          // Connects directly to your Neon PostgreSQL pool
-    tableName: 'session', // Name of the table we will create in Neon
+    pool: pool,         
+    tableName: 'session', 
     createTableIfMissing: false
   }),
   secret: process.env.SESSION_SECRET || 'pennywise_secret_key',
@@ -56,251 +60,16 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// --- PASSPORT SERIALIZATION ---
-passport.serializeUser((user, done) => done(null, user.id));
-passport.deserializeUser(async (id, done) => {
-  try {
-    const res = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
-    done(null, res.rows[0]);
-  } catch (err) {
-    done(err, null);
-  }
-});
+// Initialize Passport Strategies & Serialization
+configurePassport();
 
-// --- AUTH STRATEGIES ---
+// --- MOUNT ROUTERS ---
+app.use(authRoutes);
+app.use(expenseRoutes);
+app.use(userRoutes);
+app.use(aiRoutes);
 
-// A. Local Strategy (Username/Password)
-passport.use(new LocalStrategy(async (username, password, done) => {
-  try {
-    const res = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-    const user = res.rows[0];
-
-    if (!user || !user.password) return done(null, false, { message: 'Invalid credentials' });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return done(null, false, { message: 'Invalid credentials' });
-
-    return done(null, user);
-  } catch (err) {
-    return done(err);
-  }
-}));
-
-// B. Google Strategy
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback"
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      const email = profile.emails[0].value;
-      const googleId = profile.id;
-
-      let res = await pool.query("SELECT * FROM users WHERE google_id = $1 OR email = $2", [googleId, email]);
-      
-      if (res.rows.length > 0) {
-        return done(null, res.rows[0]);
-      } else {
-        const newUser = await pool.query(
-          "INSERT INTO users (username, google_id, email) VALUES ($1, $2, $3) RETURNING *",
-          [profile.displayName, googleId, email]
-        );
-        return done(null, newUser.rows[0]);
-      }
-    } catch (err) {
-      return done(err);
-    }
-  }
-));
-
-app.post("/api/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) return res.status(500).json({ error: "Logout failed" });
-    
-    req.session.destroy(() => {
-      res.clearCookie('connect.sid'); // Clears the session cookie
-      res.json({ message: "Logged out" });
-    });
-  });
-});
-
-// --- AUTH ROUTES ---
-
-app.post("/api/register", async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await pool.query(
-      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id, username",
-      [username, hashedPassword]
-    );
-    res.status(201).json(newUser.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: "Username already exists" });
-  }
-});
-
-app.post("/api/login", passport.authenticate('local'), (req, res) => {
-  res.json({ message: "Logged in successfully", user: req.user.username });
-});
-
-app.get("/auth/google", passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-app.get("/auth/google/callback", 
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => res.redirect(process.env.FRONTEND_URL || 'http://localhost:5173/') 
-);
-
-// app.post("/api/logout", (req, res) => {
-//   req.logout((err) => {
-//     if (err) return res.status(500).json({ error: "Logout failed" });
-//     res.json({ message: "Logged out" });
-//   });
-// });
-
-// Middleware to check if user is logged in
-const isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) return next();
-  res.status(401).json({ error: "Unauthorized" });
-};
-
-// --- AI ADVICE ROUTE (Now Protected) ---
-
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
-
-app.post("/api/ai-advice", isAuthenticated, async (req, res) => {
-  try {
-    const { expenses, prompt } = req.body; 
-
-    // 💰 1. Pull user's income parameters securely from the database
-    const userRes = await pool.query("SELECT monthly_income, annual_income FROM users WHERE id = $1", [req.user.id]);
-    const { monthly_income, annual_income } = userRes.rows[0] || { monthly_income: 0, annual_income: 0 };
-
-    // 📦 2. Bundle everything into a single financial payload
-    const financialData = {
-      monthlyIncome: monthly_income,
-      annualIncome: annual_income,
-      totalExpensesTracked: expenses.length,
-      expensesList: expenses
-    };
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        { 
-          role: "system", 
-          content: `You are PennyWise, a sharp and crisp Indian financial advisor. You will receive a JSON packet containing the user's tracked expenses AND their monthly/annual income. Analyze their actual savings rate, critique discretionary habits against their real income using a strict 50/30/20 target breakdown, and provide highly actionable, short bulleted financial advice in Rupees (₹). DO NOT output any internal thinking process, chain-of-thought, metadata checklists, or <think> tags.` 
-        },
-        { role: "user", content: `User Question: ${prompt}\n\nFinancial Packet Data: ${JSON.stringify(financialData)}` },
-      ],
-      model: "llama-3.1-8b-instant", 
-    });
-    const rawText = chatCompletion.choices[0].message.content;
-
-    // 👇 Clean the string on the backend
-    // const cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/, '').trim();
-    const cleanText = rawText.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim();
-
-    res.json({ advice: cleanText });
-    // res.json({ advice: chatCompletion.choices[0].message.content });
-  } catch (err) {
-    res.status(500).json({ advice: "Offline." });
-  }
-});
-
-// --- EXPENSE ROUTES (Now filtered by user_id) ---
-
-app.post("/api/expenses", isAuthenticated, async (req, res) => {
-    try {
-        const { description, amount, category, date } = req.body;
-        const finalDate = date || new Date().toISOString().split('T')[0];
-
-        const newExpense = await pool.query(
-            "INSERT INTO expenses (description, amount, category, date, user_id) VALUES($1, $2, $3, $4, $5) RETURNING *",
-            [description, amount, category, finalDate, req.user.id] // user_id from session
-        );
-        res.json(newExpense.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.get("/api/expenses", isAuthenticated, async (req, res) => {
-    try {
-        const { date } = req.query;
-        let queryText = "SELECT * FROM expenses WHERE user_id = $1"; // Only current user's data
-        let values = [req.user.id];
-
-        if (date && date !== "undefined") {
-            queryText += " AND date = $2 ORDER BY id ASC";
-            values.push(date);
-        } else {
-            queryText += " ORDER BY date DESC";
-        }
-
-        const allExpenses = await pool.query(queryText, values);
-        res.json(allExpenses.rows);
-    } catch (err) {
-        res.status(500).send("Server Error");
-    }
-});
-
-app.delete("/api/expenses/:id", isAuthenticated, async (req, res) => {
-  try {
-    const { id } = req.params;
-    // Check user_id to ensure they can only delete their own
-    await pool.query("DELETE FROM expenses WHERE id = $1 AND user_id = $2", [id, req.user.id]);
-    res.json("Expense deleted!");
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// --- USER INCOME MANAGEMENT ROUTES ---
-
-// Get current user profile (including tracked income and budget)
-app.get("/api/user/profile", isAuthenticated, async (req, res) => {
-  try {
-    // 👇 FIX 1: Added monthly_budget to the SELECT query
-    const user = await pool.query("SELECT monthly_income, annual_income, monthly_budget FROM users WHERE id = $1", [req.user.id]);
-    
-    // 👇 FIX 2: Added monthly_budget: 0 to the fallback object
-    res.json(user.rows[0] || { monthly_income: 0, annual_income: 0, monthly_budget: 0 });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch profile dataset." });
-  }
-});
-
-// Update income and budget values
-app.post("/api/user/update-income", isAuthenticated, async (req, res) => {
-  try {
-    // 👇 FIX 3: Added monthlyBudget to the destructuring
-    const { monthlyIncome, annualIncome, monthlyBudget } = req.body;
-    
-    const monthly = parseFloat(monthlyIncome) || 0;
-    const annual = parseFloat(annualIncome) || (monthly * 12);
-    const budget = parseFloat(monthlyBudget) || 0; // 👇 FIX 4: Parse the budget
-
-    await pool.query(
-      // 👇 FIX 5: Added monthly_budget = $3 to the SQL UPDATE query
-      "UPDATE users SET monthly_income = $1, annual_income = $2, monthly_budget = $3 WHERE id = $4",
-      [monthly, annual, budget, req.user.id] // Passed budget as the 3rd variable
-    );
-
-    res.json({ 
-      message: "Income updated successfully!", 
-      monthly_income: monthly, 
-      annual_income: annual,
-      monthly_budget: budget // 👇 FIX 6: Send the updated budget back to the frontend
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update income." });
-  }
-});
-// 4. PORT & SERVERLESS EXPORT
+// --- PORT & SERVERLESS EXPORT ---
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'production') {
