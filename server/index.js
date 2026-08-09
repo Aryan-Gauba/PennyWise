@@ -261,36 +261,45 @@ app.delete("/api/expenses/:id", isAuthenticated, async (req, res) => {
 
 // --- USER INCOME MANAGEMENT ROUTES ---
 
-// Get current user profile (including tracked income)
+// Get current user profile (including tracked income and budget)
 app.get("/api/user/profile", isAuthenticated, async (req, res) => {
   try {
-    const user = await pool.query("SELECT monthly_income, annual_income FROM users WHERE id = $1", [req.user.id]);
-    res.json(user.rows[0] || { monthly_income: 0, annual_income: 0 });
+    // 👇 FIX 1: Added monthly_budget to the SELECT query
+    const user = await pool.query("SELECT monthly_income, annual_income, monthly_budget FROM users WHERE id = $1", [req.user.id]);
+    
+    // 👇 FIX 2: Added monthly_budget: 0 to the fallback object
+    res.json(user.rows[0] || { monthly_income: 0, annual_income: 0, monthly_budget: 0 });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch profile dataset." });
   }
 });
 
-// Update income values
+// Update income and budget values
 app.post("/api/user/update-income", isAuthenticated, async (req, res) => {
   try {
-    const { monthlyIncome, annualIncome } = req.body;
+    // 👇 FIX 3: Added monthlyBudget to the destructuring
+    const { monthlyIncome, annualIncome, monthlyBudget } = req.body;
     
     const monthly = parseFloat(monthlyIncome) || 0;
-    // Fallback: If they only fill out monthly, auto-calculate their annual income (monthly * 12)
     const annual = parseFloat(annualIncome) || (monthly * 12);
+    const budget = parseFloat(monthlyBudget) || 0; // 👇 FIX 4: Parse the budget
 
     await pool.query(
-      "UPDATE users SET monthly_income = $1, annual_income = $2 WHERE id = $3",
-      [monthly, annual, req.user.id]
+      // 👇 FIX 5: Added monthly_budget = $3 to the SQL UPDATE query
+      "UPDATE users SET monthly_income = $1, annual_income = $2, monthly_budget = $3 WHERE id = $4",
+      [monthly, annual, budget, req.user.id] // Passed budget as the 3rd variable
     );
 
-    res.json({ message: "Income updated successfully!", monthly_income: monthly, annual_income: annual });
+    res.json({ 
+      message: "Income updated successfully!", 
+      monthly_income: monthly, 
+      annual_income: annual,
+      monthly_budget: budget // 👇 FIX 6: Send the updated budget back to the frontend
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to update income." });
   }
 });
-
 // 4. PORT & SERVERLESS EXPORT
 const PORT = process.env.PORT || 5000;
 
