@@ -5,6 +5,7 @@ import OpenAI from "openai";
 import dotenv from 'dotenv';
 import passport from 'passport';
 import session from 'express-session';
+import pgSession from 'connect-pg-simple';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from 'bcrypt';
@@ -32,16 +33,22 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 1. Session Configuration
+const PgSessionStore = pgSession(session);
+
 // 1. Session Configuration
 app.use(session({
+  store: new PgSessionStore({
+    pool: pool,          // Connects directly to your Neon PostgreSQL pool
+    tableName: 'session', // Name of the table we will create in Neon
+    createTableIfMissing: false
+  }),
   secret: process.env.SESSION_SECRET || 'pennywise_secret_key',
   resave: false,
   saveUninitialized: false,
-  proxy: true, // 👈 Tells express-session to trust Vercel's reverse proxy headers
+  proxy: true, 
   cookie: { 
-    secure: true, // 👈 Must be true for HTTPS (Cross-domain cookies won't save without this)
-    sameSite: 'none', // 👈 Must be 'none' so Vercel can pass the cookie to your client domain
+    secure: true, 
+    sameSite: 'none', 
     maxAge: 24 * 60 * 60 * 1000 
   }
 }));
