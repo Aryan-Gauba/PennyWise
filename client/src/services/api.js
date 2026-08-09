@@ -18,7 +18,7 @@ export const authService = {
   login: (credentials) => api.post('/api/login', credentials),
   register: (userData) => api.post('/api/register', userData),
   logout: () => api.post('/api/logout'),
-  checkAuth: () => api.get('/api/expenses') // Acts as our auth check
+  checkAuth: () => api.get('/api/current_user') // Acts as our auth check
 };
 
 export const expenseService = {

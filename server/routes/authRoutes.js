@@ -5,6 +5,14 @@ import pool from '../db.js';
 
 const router = express.Router();
 
+router.get("/api/current_user", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ isAuthenticated: true, user: req.user.username });
+  } else {
+    res.json({ isAuthenticated: false });
+  }
+});
+
 router.post("/api/register", async (req, res) => {
   const { username, password } = req.body;
   try {

@@ -12,17 +12,21 @@ export const AuthProvider = ({ children }) => {
   // Check auth status when the app first loads
   useEffect(() => {
     const initAuth = async () => {
-      try {
+        try {
         const res = await authService.checkAuth();
-        if (res.status === 200) setIsAuthenticated(true);
-      } catch (err) {
+        if (res.data.isAuthenticated) {
+            setIsAuthenticated(true);
+        } else {
+            setIsAuthenticated(false);
+        }
+        } catch (err) {
         setIsAuthenticated(false);
-      } finally {
+        } finally {
         setLoading(false);
-      }
+        }
     };
     initAuth();
-  }, []);
+    }, []);
 
   // Helper functions for clean logins/logouts
   const login = async (formData) => {
