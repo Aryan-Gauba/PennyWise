@@ -1,11 +1,9 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { expenseService } from '../services/api';
 
 const ExpenseList = ({ expenses, setExpenses }) => {
   const deleteExpense = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/expenses/${id}`);
+      await expenseService.delete(id);
       setExpenses(expenses.filter(expense => expense.id !== id));
     } catch (err) {
       console.error(err.message);

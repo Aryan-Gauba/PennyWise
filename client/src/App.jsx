@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { expenseService } from './services/api';
+import { useAuth } from './context/AuthContext'; // 1. Import our custom hook
 import './App.css';
 import Analysis from './components/Analysis';
 import Navbar from './components/Navbar';
@@ -10,11 +11,6 @@ import Footer from './components/Footer';
 import About from './components/About';
 import Login from './components/Login';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// Configure axios globally to handle session cookies
-axios.defaults.withCredentials = true;
-
 function TrackerPage() {
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
@@ -22,7 +18,7 @@ function TrackerPage() {
 
   const fetchByDate = async (date) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/expenses?date=${date}`);
+      const res = await expenseService.getByDate(date);
       setExpenses(res.data);
     } catch (err) {
       console.error("Fetch error:", err.message);
@@ -35,7 +31,6 @@ function TrackerPage() {
 
   return (
     <div className="tracker-page">
-      {/* LEFT COLUMN: Data Entry / Forms (400px wide based on CSS) */}
       <div className="sidebar-section">
         <div className="expense-form">
           <h3>Add New Expense</h3>
@@ -46,10 +41,8 @@ function TrackerPage() {
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Data Viewing / Lists (1fr wide based on CSS) */}
       <div className="main-section">
         <div className="expense-list-container">
-          {/* Moved the date selector to sit cleanly above the list */}
           <div style={{ marginBottom: '24px' }}>
             <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)', fontWeight: '600' }}>
               View Expenses for:
@@ -70,37 +63,23 @@ function TrackerPage() {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // Check authentication status on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await axios.get(`${API_BASE_URL}/api/expenses`);
-        if (res.status === 200) setIsAuthenticated(true);
-      } catch (err) {
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkAuth();
-  }, []);
+  // 2. Grab the global auth state from Context
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) return <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--primary)', fontSize: '1.2rem', fontWeight: 'bold' }}>Loading PennyWise...</div>;
 
   return (
     <Router>
       <div className="App">
-        <Navbar isAuth={isAuthenticated} setIsAuth={setIsAuthenticated} />
+        {/* 3. Look! No more props needed for Navbar */}
+        <Navbar /> 
         
-        {/* Swapped Bootstrap classes for our custom container */}
         <div className="container" style={{ flexGrow: 1 }}>
           <Routes>
             <Route 
               path="/" 
-              element={isAuthenticated ? <TrackerPage /> : <Login setAuth={setIsAuthenticated} />} 
+              /* 4. No more props needed for Login */
+              element={isAuthenticated ? <TrackerPage /> : <Login />} 
             />
             
             <Route 

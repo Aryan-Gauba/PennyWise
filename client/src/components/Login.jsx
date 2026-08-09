@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { authService, API_BASE_URL } from '../services/api';
+import { useAuth } from '../context/AuthContext'; // 1. Import our custom hook
 import { FaGoogle, FaLock, FaUser } from 'react-icons/fa';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-const Login = ({ setAuth }) => {
+const Login = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  
+  // 2. Destructure the login method from context
+  const { login } = useAuth();
 
   const { username, password } = formData;
 
@@ -16,15 +18,15 @@ const Login = ({ setAuth }) => {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const endpoint = isRegister ? '/api/register' : '/api/login';
-    
+
     try {
-      await axios.post(`${API_BASE_URL}${endpoint}`, formData, { withCredentials: true });
-      if (!isRegister) {
-        setAuth(true);
-      } else {
+      if (isRegister) {
+        await authService.register(formData);
         setIsRegister(false);
         alert("Registration successful! Please login.");
+      } else {
+        // 3. Use the global login function instead of the setAuth prop
+        await login(formData);
       }
     } catch (err) {
       setError(err.response?.data?.error || "Authentication failed");

@@ -1,10 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// Ensure axios passes along session cookies for passport authentication
-const axiosConfig = { credentials: true };
+import { expenseService, userService } from '../services/api';
 
 const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
   const [description, setDescription] = useState("");
@@ -18,7 +13,7 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
 
   // Fetch current user income profile on component mount
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/api/user/profile`, axiosConfig)
+    userService.getProfile()
       .then(res => {
         setIncome(res.data);
         setIncomeFormData({ 
@@ -33,7 +28,7 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
   const handleIncomeUpdate = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/user/update-income`, incomeFormData, axiosConfig);
+      const res = await userService.updateIncome(incomeFormData);
       setIncome({ monthly_income: res.data.monthly_income, annual_income: res.data.annual_income });
       setIsEditingIncome(false);
     } catch (err) {
@@ -45,15 +40,8 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
   const onSubmitForm = async (e) => {
     e.preventDefault();
     try {
-      const body = { 
-        description, 
-        amount: Number(amount), 
-        category, 
-        date: selectedDate 
-      };
-      
-      await axios.post(`${API_BASE_URL}/api/expenses`, body, axiosConfig);
-      
+      const body = { description, amount: Number(amount), category, date: selectedDate };
+      await expenseService.add(body);
       onExpenseAdded(); 
       setDescription("");
       setAmount("");

@@ -1,20 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext'; // 1. Import our custom hook
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-const Navbar = ({ isAuth, setIsAuth }) => {
+const Navbar = () => {
   const navigate = useNavigate();
+  // 2. Destructure exactly what we need from context
+  const { isAuthenticated, logout } = useAuth();
 
   const handleLogout = async () => {
     try {
-      // Calling the logout route you added to index.js
-      await axios.post(`${API_BASE_URL}/api/logout`);
-      
-      // Update global state in App.jsx
-      setIsAuth(false);
-      
-      // Redirect to the login/home page
+      await logout(); // 3. Use the context's logout function
       navigate('/');
     } catch (err) {
       console.error("Logout failed:", err.message);
@@ -29,8 +23,8 @@ const Navbar = ({ isAuth, setIsAuth }) => {
         <Link to="/analysis">Analysis</Link>
         <Link to="/about">About</Link>
         
-        {/* Only show the logout button if the user is logged in */}
-        {isAuth && (
+        {/* 4. Use isAuthenticated instead of the old isAuth prop */}
+        {isAuthenticated && (
           <button 
             onClick={handleLogout} 
             className="logout-btn"
