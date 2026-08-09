@@ -16,24 +16,33 @@ const ExpenseList = ({ expenses, setExpenses }) => {
   const dayTotal = expenses.reduce((acc, item) => acc + Number(item.amount), 0);
 
   return (
-    <div className="expense-list-container">
-      <ul className="expense-list">
-        {expenses.map(expense => (
-          <li key={expense.id} className="expense-item">
-            <span className="desc">{expense.description}</span>
-            <span className="cat">{expense.category}</span>
-            <span className="amt">₹{Number(expense.amount).toFixed(2)}</span>
-            <button onClick={() => deleteExpense(expense.id)} className="delete-btn">Delete</button>
-          </li>
-        ))}
-      </ul>
+    <>
+      {expenses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+          <p>No expenses found for this date.</p>
+        </div>
+      ) : (
+        <ul className="expense-list">
+          {expenses.map(expense => (
+            <li key={expense.id} className="expense-item">
+              <span className="desc">{expense.description}</span>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span className="cat">{expense.category}</span>
+                <span className="amt">₹{Number(expense.amount).toFixed(2)}</span>
+                <button onClick={() => deleteExpense(expense.id)} className="delete-btn">Delete</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      
       {expenses.length > 0 && (
         <div className="list-footer">
-          <strong>Total for this Date:</strong>
+          <strong style={{ color: 'var(--text-main)' }}>Total for this Date:</strong>
           <span className="total-amount">₹{dayTotal.toFixed(2)}</span>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

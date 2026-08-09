@@ -10,7 +10,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const Analysis = () => {
   const [expenses, setExpenses] = useState([]);
-  const [filter, setFilter] = useState('monthly');
+  
+  // Independent filters for each chart
+  const [trendFilter, setTrendFilter] = useState('monthly'); // Line Chart (Groups data)
+  const [barFilter, setBarFilter] = useState('all');         // Bar Chart (Filters data range)
+  const [pieFilter, setPieFilter] = useState('all');         // Pie Chart (Filters data range)
+  
   const [userPrompt, setUserPrompt] = useState("");
   const [advice, setAdvice] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,12 +24,39 @@ const Analysis = () => {
     axios.get(`${API_BASE_URL}/api/expenses`).then(res => setExpenses(res.data));
   }, []);
 
-  // 1. Static Categories for Bar Chart (Ensures all show up)
   const ALL_CATEGORIES = ["Food", "Transport", "Entertainment", "Shopping", "Other"];
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-  const categoryData = useMemo(() => {
+  // --- UTILITY: Filter Expenses by Timeframe ---
+  const filterByTimeframe = (expensesList, timeframe) => {
+    if (timeframe === 'all') return expensesList;
+    
+    const today = new Date();
+    return expensesList.filter(exp => {
+      const expDate = new Date(exp.date);
+      
+      if (timeframe === 'weekly') {
+        const lastWeek = new Date(today);
+        lastWeek.setDate(today.getDate() - 7);
+        return expDate >= lastWeek;
+      }
+      if (timeframe === 'monthly') {
+        return expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear();
+      }
+      if (timeframe === 'yearly') {
+        return expDate.getFullYear() === today.getFullYear();
+      }
+      return true;
+    });
+  };
+
+  // --- CHART DATA PROCESSING ---
+
+  // 1. Bar Chart Data (Filtered by barFilter)
+  const categoryDataBar = useMemo(() => {
+    const timeFilteredExpenses = filterByTimeframe(expenses, barFilter);
     return ALL_CATEGORIES.map(category => {
-      const categoryExpenses = expenses.filter(
+      const categoryExpenses = timeFilteredExpenses.filter(
         (expense) => expense.category.toLowerCase() === category.toLowerCase()
       );
       return {
@@ -32,17 +64,31 @@ const Analysis = () => {
         value: categoryExpenses.reduce((sum, current) => sum + Number(current.amount), 0)
       };
     });
-  }, [expenses]);
+  }, [expenses, barFilter]);
 
-  // 2. Date-Wise Filtered Data
+  // 2. Pie Chart Data (Filtered by pieFilter)
+  const categoryDataPie = useMemo(() => {
+    const timeFilteredExpenses = filterByTimeframe(expenses, pieFilter);
+    return ALL_CATEGORIES.map(category => {
+      const categoryExpenses = timeFilteredExpenses.filter(
+        (expense) => expense.category.toLowerCase() === category.toLowerCase()
+      );
+      return {
+        name: category,
+        value: categoryExpenses.reduce((sum, current) => sum + Number(current.amount), 0)
+      };
+    });
+  }, [expenses, pieFilter]);
+
+  // 3. Line Chart Data (Grouped by trendFilter)
   const filteredDateData = useMemo(() => {
     const groups = expenses.reduce((acc, curr) => {
       const d = new Date(curr.date);
       let label = "";
-      if (filter === 'weekly') {
+      if (trendFilter === 'weekly') {
         const startOfWeek = new Date(d.setDate(d.getDate() - d.getDay())).toLocaleDateString();
         label = `Week of ${startOfWeek}`;
-      } else if (filter === 'yearly') {
+      } else if (trendFilter === 'yearly') {
         label = d.getFullYear().toString();
       } else {
         label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
@@ -51,10 +97,9 @@ const Analysis = () => {
       return acc;
     }, {});
     return Object.keys(groups).map(key => ({ date: key, amount: groups[key] }));
-  }, [expenses, filter]);
+  }, [expenses, trendFilter]);
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-
+  // --- AI HANDLER ---
   const getAIAdvice = async () => {
     if (expenses.length === 0) {
       setAdvice("Please add some expenses first!");
@@ -77,12 +122,13 @@ const Analysis = () => {
     <div className="analysis-page">
       <h2 style={{ marginBottom: '24px', color: 'var(--text-main)' }}>Financial Dashboard</h2>
 
+      {/* Line Chart */}
       <div className="chart-card" style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h4 style={{ color: 'var(--text-main)' }}>Spending Trends</h4>
           <select 
-            value={filter} 
-            onChange={(e) => setFilter(e.target.value)}
+            value={trendFilter} 
+            onChange={(e) => setTrendFilter(e.target.value)}
             style={{ width: 'auto', padding: '8px 16px', background: 'var(--bg-color)' }}
           >
             <option value="weekly">Weekly</option>
@@ -105,10 +151,23 @@ const Analysis = () => {
       </div>
 
       <div className="analysis-grid">
+        {/* Bar Chart */}
         <div className="chart-card">
-          <h4 style={{ color: 'var(--text-main)', marginBottom: '20px' }}>Expenses by Category</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h4 style={{ color: 'var(--text-main)' }}>Expenses by Category</h4>
+            <select 
+              value={barFilter} 
+              onChange={(e) => setBarFilter(e.target.value)}
+              style={{ width: 'auto', padding: '6px 12px', fontSize: '0.85rem', background: 'var(--bg-color)' }}
+            >
+              <option value="all">All Time</option>
+              <option value="weekly">This Week</option>
+              <option value="monthly">This Month</option>
+              <option value="yearly">This Year</option>
+            </select>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={categoryData}>
+            <BarChart data={categoryDataBar}>
               <XAxis dataKey="name" stroke="var(--text-muted)" />
               <YAxis stroke="var(--text-muted)" />
               <Tooltip 
@@ -120,12 +179,25 @@ const Analysis = () => {
           </ResponsiveContainer>
         </div>
 
+        {/* Pie Chart */}
         <div className="chart-card">
-          <h4 style={{ color: 'var(--text-main)', marginBottom: '20px' }}>Spending Share</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h4 style={{ color: 'var(--text-main)' }}>Spending Share</h4>
+            <select 
+              value={pieFilter} 
+              onChange={(e) => setPieFilter(e.target.value)}
+              style={{ width: 'auto', padding: '6px 12px', fontSize: '0.85rem', background: 'var(--bg-color)' }}
+            >
+              <option value="all">All Time</option>
+              <option value="weekly">This Week</option>
+              <option value="monthly">This Month</option>
+              <option value="yearly">This Year</option>
+            </select>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={categoryData.filter(d => d.value > 0)} dataKey="value" nameKey="name" outerRadius={100} label>
-                {categoryData.filter(d => d.value > 0).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              <Pie data={categoryDataPie.filter(d => d.value > 0)} dataKey="value" nameKey="name" outerRadius={100} label>
+                {categoryDataPie.filter(d => d.value > 0).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
               <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
               <Legend wrapperStyle={{ color: 'var(--text-muted)' }} />
@@ -134,6 +206,7 @@ const Analysis = () => {
         </div>
       </div>
 
+      {/* AI Insights */}
       <div className="chart-card" style={{ marginTop: '32px' }}>
         <h3 style={{ textAlign: 'center', color: 'var(--primary)', marginBottom: '10px' }}>🤖 PennyWise AI Insights</h3>
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '20px' }}>Ask a specific question or get a general analysis.</p>
