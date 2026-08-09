@@ -1,4 +1,6 @@
-/* Global Reset & Typography */
+/* =========================================================
+   Global Reset & Typography 
+   ========================================================= */
 :root {
   /* Modern FinTech Dark Theme */
   --primary: #10b981; /* Emerald Green */
@@ -11,7 +13,7 @@
   --border-light: rgba(255, 255, 255, 0.08);
   --border-focus: rgba(16, 185, 129, 0.4);
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --card-radius: 16px; /* Slightly sharper, more professional corners */
+  --card-radius: 16px; 
 }
 
 * {
@@ -27,7 +29,16 @@ body {
   line-height: 1.6;
 }
 
-/* Navbar - Kept Glassmorphism but refined */
+/* --- APP STRUCTURE & FOOTER FIX --- */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================
+   Navbar & Footer
+   ========================================================= */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -35,30 +46,106 @@ body {
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  padding: 1rem 5%; /* Wider spread */
+  padding: 1rem 5%; 
   border-bottom: 1px solid var(--border-light);
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
-/* Main Layout Container */
-.container {
-  max-width: 1280px; /* Wider container for better dashboard feel */
-  margin: 40px auto;
-  padding: 0 24px;
+.navbar h2 {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
-/* Dashboard Grid - REDESIGNED PROPORTIONS */
+.nav-links {
+  display: flex;
+  gap: 30px; 
+  align-items: center;
+}
+
+.nav-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  margin-left: 0; 
+}
+
+.nav-links a:hover {
+  color: var(--text-main);
+}
+
+.footer {
+  background: rgba(15, 23, 42, 0.9);
+  border-top: 1px solid var(--border-light);
+  padding: 30px 0;
+  width: 100%;
+  margin-top: auto;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center;
+  gap: 15px; 
+}
+
+.footer-text {
+  font-size: 0.95rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.footer-icons {
+  display: flex;
+  gap: 25px; 
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-link {
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  color: var(--primary);
+  transform: translateY(-3px); 
+}
+
+/* =========================================================
+   Layout Containers & Grids
+   ========================================================= */
+.container {
+  flex: 1; 
+  width: 100%;
+  max-width: 1280px; 
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
 .tracker-page {
   display: grid;
-  /* Left column: 400px (for the form), Right column: 1fr (for the list) */
   grid-template-columns: 400px 1fr; 
   gap: 32px;
   align-items: start;
 }
 
-/* Common Card Style - Smoother styling */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+/* =========================================================
+   Components (Cards, Forms, Inputs, Buttons)
+   ========================================================= */
 .expense-form, .expense-list-container, .chart-card, .about-page {
   background: var(--bg-card);
   padding: 32px;
@@ -72,25 +159,58 @@ body {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
-/* Form Styling Refinements */
 .expense-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-input, select {
+input, select, textarea {
   width: 100%;
   padding: 14px 16px;
   border: 1px solid var(--border-light);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: rgba(15, 23, 42, 0.5); /* Darker input background for contrast */
+  background: rgba(15, 23, 42, 0.5); 
   color: var(--text-main);
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
-/* Expense List Refinements */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--border-focus);
+}
+
+button {
+  background: var(--primary);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   Expense List Items
+   ========================================================= */
+.expense-list {
+  list-style: none;
+}
+
 .expense-item {
   display: flex;
   justify-content: space-between;
@@ -100,17 +220,22 @@ input, select {
   transition: background-color 0.2s ease;
 }
 
+.expense-item:last-child { border-bottom: none; }
+
 .expense-item:hover {
   background-color: rgba(255, 255, 255, 0.02);
   border-radius: 8px;
-  padding: 20px 10px; /* Slight padding shift on hover for interaction feedback */
+  padding: 20px 10px; 
   margin: 0 -10px;
 }
+
+.desc { font-weight: 600; flex: 2; color: var(--text-main); }
+.amt { font-weight: 700; color: var(--text-main); margin-right: 12px; }
 
 .cat { 
   font-size: 0.75rem; 
   text-transform: uppercase; 
-  background: rgba(16, 185, 129, 0.1); /* Tinted with primary color */
+  background: rgba(16, 185, 129, 0.1); 
   color: var(--primary);
   padding: 6px 10px; 
   border-radius: 6px;
@@ -119,9 +244,187 @@ input, select {
   border: none;
 }
 
-/* Responsive adjustments */
-@media (max-width: 968px) {
+.delete-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.delete-btn:hover { 
+  background: rgba(239, 68, 68, 0.25);
+  transform: none;
+}
+
+/* Total Amount Footer */
+.list-footer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-amount { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+
+/* =========================================================
+   AI Insights & Advice Box
+   ========================================================= */
+.advice-box {
+  background-color: rgba(16, 185, 129, 0.05);
+  border: 1px solid var(--border-light);
+  border-left: 4px solid var(--primary);
+  padding: 24px;
+  border-radius: 12px;
+  width: 100%;
+}
+
+.advice-header {
+  color: var(--primary);
+  font-weight: 700;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  display: block;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 10px;
+}
+
+.advice-content {
+  white-space: pre-wrap; 
+  line-height: 1.8;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+/* =========================================================
+   Login Page Specifics
+   ========================================================= */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 450px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 0 16px;
+  transition: all 0.2s ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--border-focus);
+}
+
+.input-group input {
+  border: none;
+  background: transparent;
+  padding-left: 0;
+}
+
+.input-group input:focus {
+  box-shadow: none; 
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  margin: 24px 0;
+  font-size: 0.85rem;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.divider span {
+  padding: 0 16px;
+}
+
+.google-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   Responsive Design
+   ========================================================= */
+
+/* Tablet (Screens under 1024px) */
+@media (max-width: 1024px) {
   .tracker-page {
-    grid-template-columns: 1fr; /* Stack on smaller screens */
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+  }
+}
+
+/* Mobile & Small Tablet (Screens under 968px) */
+@media (max-width: 968px) {
+  .tracker-page, .analysis-grid {
+    grid-template-columns: 1fr; 
+  }
+}
+
+/* Mobile (Screens under 768px) */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 15px;
+    padding: 1rem 20px;
+  }
+  
+  .tracker-page {
+    gap: 30px;
+  }
+
+  .expense-form, 
+  .expense-list-container, 
+  .chart-card {
+    padding: 24px; 
+  }
+}
+
+/* Small Mobile (Screens under 480px) */
+@media (max-width: 480px) {
+  .expense-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .expense-item > div {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .delete-btn {
+    width: 100%;
+    margin-top: 10px;
   }
 }

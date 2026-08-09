@@ -10,8 +10,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const Analysis = () => {
   const [expenses, setExpenses] = useState([]);
-  const [filter, setFilter] = useState('monthly'); // 'weekly', 'monthly', 'yearly'
-  const [userPrompt, setUserPrompt] = useState(""); // State for the new prompt box
+  const [filter, setFilter] = useState('monthly');
+  const [userPrompt, setUserPrompt] = useState("");
   const [advice, setAdvice] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,15 +19,19 @@ const Analysis = () => {
     axios.get(`${API_BASE_URL}/api/expenses`).then(res => setExpenses(res.data));
   }, []);
 
-  // --- DATA PROCESSING LOGIC ---
+  // 1. Static Categories for Bar Chart (Ensures all show up)
+  const ALL_CATEGORIES = ["Food", "Transport", "Entertainment", "Shopping", "Other"];
 
-  // 1. Category Distribution (Pie & Bar)
   const categoryData = useMemo(() => {
-    const counts = expenses.reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + Number(curr.amount);
-      return acc;
-    }, {});
-    return Object.keys(counts).map(key => ({ name: key, value: counts[key] }));
+    return ALL_CATEGORIES.map(category => {
+      const categoryExpenses = expenses.filter(
+        (expense) => expense.category.toLowerCase() === category.toLowerCase()
+      );
+      return {
+        name: category,
+        value: categoryExpenses.reduce((sum, current) => sum + Number(current.amount), 0)
+      };
+    });
   }, [expenses]);
 
   // 2. Date-Wise Filtered Data
@@ -35,7 +39,6 @@ const Analysis = () => {
     const groups = expenses.reduce((acc, curr) => {
       const d = new Date(curr.date);
       let label = "";
-
       if (filter === 'weekly') {
         const startOfWeek = new Date(d.setDate(d.getDate() - d.getDay())).toLocaleDateString();
         label = `Week of ${startOfWeek}`;
@@ -44,28 +47,23 @@ const Analysis = () => {
       } else {
         label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
       }
-
       acc[label] = (acc[label] || 0) + Number(curr.amount);
       return acc;
     }, {});
-
     return Object.keys(groups).map(key => ({ date: key, amount: groups[key] }));
   }, [expenses, filter]);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-  // --- AI HANDLER ---
   const getAIAdvice = async () => {
     if (expenses.length === 0) {
       setAdvice("Please add some expenses first!");
       return;
     }
-
     setLoading(true);
     try {
       const res = await axios.post(`${API_BASE_URL}/api/ai-advice`, { 
-        expenses,
-        prompt: userPrompt // Sending your custom question to the backend
+        expenses, prompt: userPrompt 
       });
       setAdvice(res.data.advice);
     } catch (err) { 
@@ -76,14 +74,17 @@ const Analysis = () => {
   };
 
   return (
-    <div className="container py-4">
-      <h2 className="mb-4">Financial Dashboard</h2>
+    <div className="analysis-page">
+      <h2 style={{ marginBottom: '24px', color: 'var(--text-main)' }}>Financial Dashboard</h2>
 
-      {/* Date-Wise Selection */}
-      <div className="card p-3 mb-4 shadow-sm border-0">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4>Spending Trends</h4>
-          <select className="form-select w-auto" value={filter} onChange={(e) => setFilter(e.target.value)}>
+      <div className="chart-card" style={{ marginBottom: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <h4 style={{ color: 'var(--text-main)' }}>Spending Trends</h4>
+          <select 
+            value={filter} 
+            onChange={(e) => setFilter(e.target.value)}
+            style={{ width: 'auto', padding: '8px 16px', background: 'var(--bg-color)' }}
+          >
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
             <option value="yearly">Yearly</option>
@@ -91,80 +92,73 @@ const Analysis = () => {
         </div>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={filteredDateData}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
-            <Line type="monotone" dataKey="amount" stroke="#8884d8" strokeWidth={3} dot={{r: 6}} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-light)" />
+            <XAxis dataKey="date" stroke="var(--text-muted)" />
+            <YAxis stroke="var(--text-muted)" />
+            <Tooltip 
+              formatter={(value) => `₹${Number(value).toFixed(2)}`} 
+              contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-light)' }} 
+            />
+            <Line type="monotone" dataKey="amount" stroke="var(--primary)" strokeWidth={3} dot={{r: 6}} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="row g-4">
-        {/* Category Bar Chart */}
-        <div className="col-lg-6">
-          <div className="card p-3 shadow-sm h-100 border-0">
-            <h4>Expenses by Category</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={categoryData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
-                <Bar dataKey="value" fill="#00C49F" radius={[5, 5, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+      <div className="analysis-grid">
+        <div className="chart-card">
+          <h4 style={{ color: 'var(--text-main)', marginBottom: '20px' }}>Expenses by Category</h4>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={categoryData}>
+              <XAxis dataKey="name" stroke="var(--text-muted)" />
+              <YAxis stroke="var(--text-muted)" />
+              <Tooltip 
+                formatter={(value) => `₹${Number(value).toFixed(2)}`}
+                contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-light)' }}
+              />
+              <Bar dataKey="value" fill="var(--primary)" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* Pie Chart Distribution */}
-        <div className="col-lg-6">
-          <div className="card p-3 shadow-sm h-100 border-0">
-            <h4>Spending Share</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={categoryData} dataKey="value" nameKey="name" outerRadius={100} label>
-                  {categoryData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="chart-card">
+          <h4 style={{ color: 'var(--text-main)', marginBottom: '20px' }}>Spending Share</h4>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={categoryData.filter(d => d.value > 0)} dataKey="value" nameKey="name" outerRadius={100} label>
+                {categoryData.filter(d => d.value > 0).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              </Pie>
+              <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
+              <Legend wrapperStyle={{ color: 'var(--text-muted)' }} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      {/* AI Section with Prompt Box */}
-        <div className="card mt-4 p-4 bg-light shadow-sm border-0">
-          <h3 className="text-center">🤖 PennyWise AI Insights</h3>
-          <p className="text-muted text-center">Ask a specific question or get a general analysis.</p>
-          
-          <div className="ai-section max-width-md mx-auto w-100" style={{ maxWidth: '100%' }}>
-            <textarea 
-              className="form-control mb-3 shadow-sm"
-              rows="3"
-              placeholder="e.g., 'How can I reduce my food spending?'"
-              value={userPrompt}
-              onChange={(e) => setUserPrompt(e.target.value)}
-            />
-            
-            <button 
-              onClick={getAIAdvice} 
-              className="btn btn-dark btn-lg w-100 shadow-sm" 
-              disabled={loading}
-            >
-              {loading ? "PennyWise is Thinking..." : "Generate AI Advice"}
-            </button>
-          </div>
+      <div className="chart-card" style={{ marginTop: '32px' }}>
+        <h3 style={{ textAlign: 'center', color: 'var(--primary)', marginBottom: '10px' }}>🤖 PennyWise AI Insights</h3>
+        <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '20px' }}>Ask a specific question or get a general analysis.</p>
+        
+        <div className="ai-section">
+          <textarea 
+            rows="3"
+            placeholder="e.g., 'How can I reduce my food spending?'"
+            value={userPrompt}
+            onChange={(e) => setUserPrompt(e.target.value)}
+            style={{ width: '100%', marginBottom: '16px' }}
+          />
+          <button onClick={getAIAdvice} disabled={loading} style={{ width: '100%' }}>
+            {loading ? "PennyWise is Thinking..." : "Generate AI Advice"}
+          </button>
+        </div>
 
-          {/* MOVE THIS OUTSIDE THE CENTERED DIV FOR FULL WIDTH ALIGNMENT */}
-          {advice && (
-            <div className="advice-box shadow-sm">
-              <span className="advice-header">📊 PennyWise Analysis Report</span>
-              <div className="advice-content">{advice}</div>
-            </div>
-          )}
-        </div>
-        </div>
+        {advice && (
+          <div className="advice-box" style={{ marginTop: '24px' }}>
+            <span className="advice-header">📊 PennyWise Analysis Report</span>
+            <div className="advice-content">{advice}</div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -19,14 +19,11 @@ const Login = ({ setAuth }) => {
     const endpoint = isRegister ? '/api/register' : '/api/login';
     
     try {
-      const res = await axios.post(`${API_BASE_URL}${endpoint}`, formData, {
-        withCredentials: true // Crucial for sending/receiving session cookies
-      });
-      
+      await axios.post(`${API_BASE_URL}${endpoint}`, formData, { withCredentials: true });
       if (!isRegister) {
-        setAuth(true); // Log the user in on success
+        setAuth(true);
       } else {
-        setIsRegister(false); // Move to login after successful registration
+        setIsRegister(false);
         alert("Registration successful! Please login.");
       }
     } catch (err) {
@@ -39,53 +36,50 @@ const Login = ({ setAuth }) => {
   };
 
   return (
-    <div className="login-container d-flex align-items-center justify-content-center">
-      <div className="card login-card shadow-lg border-0 p-4 p-md-5">
-        <div className="text-center mb-4">
-          <h2 className="fw-bold text-dark">{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
-          <p className="text-muted small">Manage your expenses with PennyWise</p>
+    <div className="login-container">
+      <div className="expense-form login-card">
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ color: 'var(--text-main)', marginBottom: '8px' }}>{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Manage your expenses with PennyWise</p>
         </div>
 
-        {error && <div className="alert alert-danger py-2 small text-center">{error}</div>}
+        {error && <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '8px', textAlign: 'center', marginBottom: '16px' }}>{error}</div>}
 
-        <form onSubmit={onSubmit}>
-          <div className="input-group mb-3">
-            <span className="input-group-text bg-light border-0"><FaUser className="text-muted" /></span>
+        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="input-group">
+            <FaUser style={{ color: 'var(--text-muted)', marginRight: '10px' }} />
             <input 
               type="text" name="username" placeholder="Username" 
-              className="form-control bg-light border-0" 
               value={username} onChange={onChange} required 
             />
           </div>
 
-          <div className="input-group mb-4">
-            <span className="input-group-text bg-light border-0"><FaLock className="text-muted" /></span>
+          <div className="input-group">
+            <FaLock style={{ color: 'var(--text-muted)', marginRight: '10px' }} />
             <input 
               type="password" name="password" placeholder="Password" 
-              className="form-control bg-light border-0" 
               value={password} onChange={onChange} required 
             />
           </div>
 
-          <button type="submit" className="btn btn-success w-100 fw-bold py-2 mb-3">
+          <button type="submit" style={{ marginTop: '10px' }}>
             {isRegister ? 'Sign Up' : 'Login'}
           </button>
         </form>
 
-        <div className="divider d-flex align-items-center my-3 text-muted small">
-          <hr className="flex-grow-1" /> <span className="mx-2">OR</span> <hr className="flex-grow-1" />
+        <div className="divider">
+          <span>OR</span>
         </div>
 
-        <button onClick={googleLogin} className="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2 py-2 mb-4">
+        <button onClick={googleLogin} className="google-btn">
           <FaGoogle /> Continue with Google
         </button>
 
-        <p className="text-center text-muted small mb-0">
+        <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '16px' }}>
           {isRegister ? 'Already have an account?' : "Don't have an account?"} 
           <span 
-            className="text-success fw-bold ms-1 cursor-pointer" 
             onClick={() => setIsRegister(!isRegister)}
-            style={{ cursor: 'pointer' }}
+            style={{ color: 'var(--primary)', fontWeight: 'bold', marginLeft: '8px', cursor: 'pointer' }}
           >
             {isRegister ? 'Login here' : 'Register now'}
           </span>
