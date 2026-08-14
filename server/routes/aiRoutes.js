@@ -32,7 +32,7 @@ router.post("/api/ai-advice", isAuthenticated, async (req, res) => {
         },
         { role: "user", content: `User Question: ${prompt}\n\nFinancial Packet Data: ${JSON.stringify(financialData)}` },
       ],
-      model: "llama-3.1-8b-instant", 
+      model: process.env.AI_MODEL || "gpt-oss-20b",
     });
     const rawText = chatCompletion.choices[0].message.content;
 
