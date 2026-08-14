@@ -18,7 +18,7 @@ router.post("/api/user/update-income", isAuthenticated, async (req, res) => {
     const { monthlyIncome, annualIncome, monthlyBudget } = req.body;
     
     const monthly = parseFloat(monthlyIncome) || 0;
-    const annual = parseFloat(annualIncome) || (monthly * 12);
+    const annual = monthly * 12;
     const budget = parseFloat(monthlyBudget) || 0; 
 
     await pool.query(
