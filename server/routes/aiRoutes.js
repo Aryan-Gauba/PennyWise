@@ -18,12 +18,14 @@ router.post("/api/ai-advice", isAuthenticated, async (req, res) => {
     const userRes = await pool.query("SELECT monthly_income, annual_income, monthly_budget FROM users WHERE id = $1", [req.user.id]);
     const { monthly_income, annual_income, monthly_budget } = userRes.rows[0] || { monthly_income: 0, annual_income: 0, monthly_budget: 0 };
 
-    // 2. Filter expenses to ONLY include the current month and year
+    // 2. Safely filter expenses to ONLY include the current month and year
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const monthlyExpenses = expenses.filter(exp => {
+    const safeExpenses = Array.isArray(expenses) ? expenses : [];
+
+    const monthlyExpenses = safeExpenses.filter(exp => {
       const expDate = new Date(exp.date);
       return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
     });
@@ -56,6 +58,7 @@ router.post("/api/ai-advice", isAuthenticated, async (req, res) => {
 
     res.json({ advice: cleanText });
   } catch (err) {
+    console.error("DETAILED AI ROUTE ERROR:", err);
     res.status(500).json({ advice: "Offline." });
   }
 });
