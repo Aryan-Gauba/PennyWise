@@ -19,16 +19,11 @@ const Navbar = ({ theme, toggleTheme }) => {
       <h2>PennyWise</h2>
       <div className="nav-links">
         {isAuthenticated ? (
+          /* 👇 LOGGED IN LINKS */
           <>
             <Link to="/">Tracker</Link>
             <Link to="/analysis">Analysis</Link>
             <Link to="/about">About</Link>
-            
-            {/* Theme Toggle Button (Left of Logout) */}
-            <button onClick={toggleTheme} className="theme-toggle-btn">
-              {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
-            </button>
-
             <button 
               onClick={handleLogout} 
               className="logout-btn"
@@ -46,17 +41,17 @@ const Navbar = ({ theme, toggleTheme }) => {
             </button>
           </>
         ) : (
+          /* 👇 LOGGED OUT LINKS */
           <>
             <Link to="/about">About</Link>
-            
-            {/* Theme Toggle Button (Left of Login) */}
-            <button onClick={toggleTheme} className="theme-toggle-btn">
-              {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
-            </button>
-
             <Link to="/login">Login</Link>
           </>
         )}
+
+        {/* ☀️/🌙 Always Rightmost Item */}
+        <button onClick={toggleTheme} className="theme-toggle-btn">
+          {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+        </button>
       </div>
     </nav>
   );
