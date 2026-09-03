@@ -429,6 +429,55 @@ button:disabled {
 }
 
 /* =========================================================
+   Light Theme Overrides
+   ========================================================= */
+[data-theme="light"] {
+  --bg-color: #f8fafc; /* Slate 50 */
+  --bg-card: #ffffff;  /* White */
+  --text-main: #0f172a; /* Slate 900 */
+  --text-muted: #64748b; /* Slate 500 */
+  --border-light: rgba(0, 0, 0, 0.08);
+  --border-focus: rgba(16, 185, 129, 0.4);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .navbar {
+  background: rgba(248, 250, 252, 0.85);
+}
+
+[data-theme="light"] .footer {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+[data-theme="light"] input, 
+[data-theme="light"] select, 
+[data-theme="light"] textarea,
+[data-theme="light"] .input-group {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+/* =========================================================
    Responsive Design
    ========================================================= */
 

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // 1. Import our custom hook
 
-const Navbar = () => {
+const Navbar = ({ theme, toggleTheme }) => {
   const navigate = useNavigate();
   // 2. Destructure exactly what we need from context
   const { isAuthenticated, logout } = useAuth();
@@ -25,6 +25,12 @@ const Navbar = () => {
             <Link to="/">Tracker</Link>
             <Link to="/analysis">Analysis</Link>
             <Link to="/about">About</Link>
+            
+            {/* Theme Toggle Button */}
+            <button onClick={toggleTheme} className="theme-toggle-btn">
+              {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+            </button>
+
             <button 
               onClick={handleLogout} 
               className="logout-btn"
@@ -46,6 +52,12 @@ const Navbar = () => {
           /* 👇 SHOWN WHEN LOGGED OUT (Login & About only) */
           <>
             <Link to="/about">About</Link>
+            
+            {/* Theme Toggle Button */}
+            <button onClick={toggleTheme} className="theme-toggle-btn">
+              {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+            </button>
+
             <Link to="/login">Login</Link>
           </>
         )}
