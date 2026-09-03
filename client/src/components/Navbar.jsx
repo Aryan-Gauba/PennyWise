@@ -1,14 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // 1. Import our custom hook
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = ({ theme, toggleTheme }) => {
   const navigate = useNavigate();
-  // 2. Destructure exactly what we need from context
   const { isAuthenticated, logout } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await logout(); // 3. Use the context's logout function
+      await logout();
       navigate('/');
     } catch (err) {
       console.error("Logout failed:", err.message);
@@ -20,13 +19,12 @@ const Navbar = ({ theme, toggleTheme }) => {
       <h2>PennyWise</h2>
       <div className="nav-links">
         {isAuthenticated ? (
-          /* 👇 SHOWN WHEN LOGGED IN */
           <>
             <Link to="/">Tracker</Link>
             <Link to="/analysis">Analysis</Link>
             <Link to="/about">About</Link>
             
-            {/* Theme Toggle Button */}
+            {/* Theme Toggle Button (Left of Logout) */}
             <button onClick={toggleTheme} className="theme-toggle-btn">
               {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
             </button>
@@ -38,7 +36,6 @@ const Navbar = ({ theme, toggleTheme }) => {
                 background: 'transparent',
                 border: '1px solid #ff4d4d',
                 color: '#ff4d4d',
-                marginLeft: '15px',
                 padding: '5px 12px',
                 borderRadius: '5px',
                 cursor: 'pointer',
@@ -49,11 +46,10 @@ const Navbar = ({ theme, toggleTheme }) => {
             </button>
           </>
         ) : (
-          /* 👇 SHOWN WHEN LOGGED OUT (Login & About only) */
           <>
             <Link to="/about">About</Link>
             
-            {/* Theme Toggle Button */}
+            {/* Theme Toggle Button (Left of Login) */}
             <button onClick={toggleTheme} className="theme-toggle-btn">
               {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
             </button>

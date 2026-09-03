@@ -51,18 +51,17 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
   // Calculate Progress Bar metrics
   const budgetLimit = Number(income.monthly_budget) || 0;
   const progressPercentage = budgetLimit > 0 ? (spentThisMonth / budgetLimit) * 100 : 0;
-  const clampedProgress = Math.min(progressPercentage, 100); // Prevents bar from overflowing
+  const clampedProgress = Math.min(progressPercentage, 100);
   
   // Dynamic color logic
-  let progressColor = 'var(--primary)'; // Green
-  if (progressPercentage >= 85) progressColor = '#ef4444'; // Red
-  else if (progressPercentage >= 50) progressColor = '#f59e0b'; // Yellow/Orange
+  let progressColor = 'var(--primary)';
+  if (progressPercentage >= 85) progressColor = '#ef4444';
+  else if (progressPercentage >= 50) progressColor = '#f59e0b';
 
   // Handlers
   const handleIncomeUpdate = async (e) => {
     e.preventDefault();
     try {
-      // Ensure your backend /api/user/update-income route is updated to save monthlyBudget!
       const res = await userService.updateIncome(incomeFormData);
       setIncome({ 
         monthly_income: res.data.monthly_income, 
@@ -83,7 +82,7 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
       await expenseService.add(body);
       
       onExpenseAdded(); 
-      fetchData(); // Refresh all expenses to update the progress bar instantly
+      fetchData();
       
       setDescription("");
       setAmount("");
@@ -93,44 +92,61 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
   };
 
   return (
-    <div style={{ width: '100%' }}>
-      
+    <div className="expense-form-wrapper">
       {/* 💰 Profile & Budget Section */}
-      <div style={{
-        background: 'rgba(15, 23, 42, 0.5)', padding: '20px', borderRadius: '12px',
-        border: '1px solid var(--border-light)', borderLeft: '4px solid var(--primary)', marginBottom: '24px'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="profile-card">
+        <div className="profile-header">
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>💰 Financial Profile</h3>
+            <h3 className="profile-title">💰 Financial Profile</h3>
             {!isEditingIncome && (
-              <p style={{ margin: '8px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Income: <span style={{ fontWeight: '600', color: 'var(--primary)' }}>₹{income.monthly_income || 0}</span> / mo
+              <p className="profile-income-text">
+                Income: <span className="income-amount">₹{income.monthly_income || 0}</span> / mo
               </p>
             )}
           </div>
           {!isEditingIncome && (
-            <button type="button" onClick={() => setIsEditingIncome(true)} style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
+            <button 
+              type="button" 
+              onClick={() => setIsEditingIncome(true)} 
+              className="edit-profile-btn"
+            >
               Edit
             </button>
           )}
         </div>
 
         {isEditingIncome ? (
-          <form onSubmit={handleIncomeUpdate} style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '140px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Monthly Income (₹)</label>
-                <input type="number" value={incomeFormData.monthlyIncome} onChange={(e) => setIncomeFormData({ ...incomeFormData, monthlyIncome: e.target.value })} required />
+          <form onSubmit={handleIncomeUpdate} className="profile-edit-form">
+            <div className="profile-inputs-row">
+              <div className="input-field-group">
+                <label className="input-label">Monthly Income (₹)</label>
+                <input 
+                  type="number" 
+                  value={incomeFormData.monthlyIncome} 
+                  onChange={(e) => setIncomeFormData({ ...incomeFormData, monthlyIncome: e.target.value })} 
+                  required 
+                />
               </div>
-              <div style={{ flex: 1, minWidth: '140px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Monthly Budget (₹)</label>
-                <input type="number" value={incomeFormData.monthlyBudget} onChange={(e) => setIncomeFormData({ ...incomeFormData, monthlyBudget: e.target.value })} placeholder="Target spending limit" required />
+              <div className="input-field-group">
+                <label className="input-label">Monthly Budget (₹)</label>
+                <input 
+                  type="number" 
+                  value={incomeFormData.monthlyBudget} 
+                  onChange={(e) => setIncomeFormData({ ...incomeFormData, monthlyBudget: e.target.value })} 
+                  placeholder="Target spending limit" 
+                  required 
+                />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
-              <button type="submit" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>Save</button>
-              <button type="button" onClick={() => setIsEditingIncome(false)} style={{ padding: '8px 16px', fontSize: '0.9rem', background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-main)' }}>Cancel</button>
+            <div className="form-actions">
+              <button type="submit" className="save-btn">Save</button>
+              <button 
+                type="button" 
+                onClick={() => setIsEditingIncome(false)} 
+                className="cancel-btn"
+              >
+                Cancel
+              </button>
             </div>
           </form>
         ) : (
@@ -141,10 +157,10 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
                 <div className="budget-labels">
                   <span className="budget-title">Monthly Budget</span>
                   <div className="budget-amounts">
-                    ₹{spentThisMonth.toFixed(0)} <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: '500' }}>/ ₹{budgetLimit}</span>
+                    ₹{spentThisMonth.toFixed(0)} <span className="budget-limit-text">/ ₹{budgetLimit}</span>
                   </div>
                 </div>
-                <span style={{ fontSize: '0.9rem', fontWeight: '600', color: progressColor }}>
+                <span className="budget-percent" style={{ color: progressColor }}>
                   {progressPercentage.toFixed(0)}%
                 </span>
               </div>
@@ -169,12 +185,24 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
         )}
       </div>
 
-      <hr style={{ border: '0', height: '1px', background: 'var(--border-light)', marginBottom: '24px' }} />
+      <hr className="form-divider" />
 
       {/* 🧾 Expense Entry Form */}
-      <form onSubmit={onSubmitForm} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <input type="text" placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} required />
-        <input type="number" placeholder="Amount" value={amount} onChange={e => setAmount(e.target.value)} required />
+      <form onSubmit={onSubmitForm} className="add-expense-form">
+        <input 
+          type="text" 
+          placeholder="Description" 
+          value={description} 
+          onChange={e => setDescription(e.target.value)} 
+          required 
+        />
+        <input 
+          type="number" 
+          placeholder="Amount" 
+          value={amount} 
+          onChange={e => setAmount(e.target.value)} 
+          required 
+        />
         <select value={category} onChange={e => setCategory(e.target.value)}>
           <option value="Food">Food</option>
           <option value="Transport">Transport</option>
@@ -182,7 +210,7 @@ const ExpenseForm = ({ onExpenseAdded, selectedDate }) => {
           <option value="Shopping">Shopping</option>
           <option value="Other">Other</option>
         </select>
-        <button type="submit" style={{ marginTop: '8px' }}>Add Expense</button>
+        <button type="submit" className="submit-expense-btn">Add Expense</button>
       </form>
     </div>
   );
