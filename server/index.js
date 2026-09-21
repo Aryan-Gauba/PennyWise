@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import passport from 'passport';
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
+import serverless from 'serverless-http';
 
 import pool from './db.js';
 import { configurePassport } from './config/passport.js';
@@ -19,10 +20,10 @@ dotenv.config();
 const app = express();
 app.set('trust proxy', 1);
 
-// --- MIDDLEWARE ---
+// --- CORS CONFIGURATION ---
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL 
+  process.env.FRONTEND_URL // Supports both AWS Amplify and Vercel frontend URLs
 ];
 
 app.use(cors({
@@ -35,11 +36,12 @@ app.use(cors({
   },
   credentials: true
 }));
+
 app.use(express.json());
 
+// --- SESSION CONFIGURATION ---
 const PgSessionStore = pgSession(session);
 
-// --- SESSION CONFIGURATION ---
 app.use(session({
   store: new PgSessionStore({
     pool: pool,         
@@ -57,10 +59,9 @@ app.use(session({
   }
 }));
 
+// --- PASSPORT MIDDLEWARE ---
 app.use(passport.initialize());
 app.use(passport.session());
-
-// Initialize Passport Strategies & Serialization
 configurePassport();
 
 // --- MOUNT ROUTERS ---
@@ -69,14 +70,18 @@ app.use(expenseRoutes);
 app.use(userRoutes);
 app.use(aiRoutes);
 
-// --- PORT & SERVERLESS EXPORT ---
-const PORT = process.env.PORT || 5000;
-
-if (process.env.NODE_ENV !== 'production') {
+// --- LOCAL DEV SERVER ---
+if (process.env.NODE_ENV !== 'production' && !process.env.LAMBDA_TASK_ROOT) {
+  const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
   });
 }
 
-// CRITICAL FOR VERCEL:
+// --- DUAL EXPORTS FOR AWS LAMBDA & VERCEL ---
+
+// 1. AWS Lambda Handler (Used by Serverless Framework)
+export const handler = serverless(app);
+
+// 2. Default Express Export (Used by Vercel & Node)
 export default app;

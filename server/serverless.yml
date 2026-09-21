@@ -1,0 +1,21 @@
+service: pennywise-backend
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-north-1
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
+    SESSION_SECRET: ${env:SESSION_SECRET}
+    GROQ_API_KEY: ${env:GROQ_API_KEY}
+    GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID}
+    GOOGLE_CLIENT_SECRET: ${env:GOOGLE_CLIENT_SECRET}
+    FRONTEND_URL: ${env:FRONTEND_URL}
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - httpApi:
+          path: '*'
+          method: '*'

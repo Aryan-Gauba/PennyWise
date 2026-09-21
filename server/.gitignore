@@ -26,3 +26,5 @@ Thumbs.db
 # Editor folders
 .vscode/
 .idea/
+
+.serverless/
